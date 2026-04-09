@@ -131,6 +131,11 @@ Markly is not just about tracking attendance — it’s about creating a system 
 > Last updated: April 2026
 
 ---
+## ☕ Support
 
-
+<p align="center">
+  <a href="https://buymeachai.ezee.li/cxinmayy">
+    <img src="https://buymeachai.ezee.li/assets/images/buymeachai-button.png" />
+  </a>
+</p>
 
