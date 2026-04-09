@@ -9,11 +9,8 @@
   <sub>Classes • Students • Attendance • Simplicity</sub>
 </p>
 
-Here’s your upgraded **README.md** with a clean screenshots section added:
 
----
-
-# 🎓 Markly
+# Markly
 
 ### *Premium Attendance Tracker for Teachers*
 
