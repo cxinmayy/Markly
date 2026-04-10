@@ -1,8 +1,12 @@
 package com.example.markly.ui;
 
 import android.database.Cursor;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.HapticFeedbackConstants;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -35,6 +39,7 @@ public class AttendanceActivity extends AppCompatActivity {
     RecyclerView recyclerStudents, recyclerViewDates;
     FloatingActionButton fabAddStudent;
     TextView tvMonthYear, tvTitle, tvSubtitle;
+    TextInputEditText etSearch;  // field so dispatchTouchEvent can access it
 
     DatabaseHelper db;
     ArrayList<Student> list;
@@ -119,6 +124,7 @@ public class AttendanceActivity extends AppCompatActivity {
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                viewHolder.itemView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
                 int position = viewHolder.getAdapterPosition();
                 Student s = list.get(position);
                 int status = (direction == ItemTouchHelper.RIGHT) ? 1 : 0;
@@ -139,19 +145,20 @@ public class AttendanceActivity extends AppCompatActivity {
 
         loadStudents();
 
-        fabAddStudent.setOnClickListener(v -> showAddStudentDialog());
+        fabAddStudent.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            showAddStudentDialog();
+        });
 
         View btnExport = findViewById(R.id.btnExport);
         View btnSearch = findViewById(R.id.btnSearch);
-        TextInputEditText etSearch = findViewById(R.id.etSearch);
+        etSearch = findViewById(R.id.etSearch);
 
         btnSearch.setOnClickListener(v -> {
-            if (etSearch.getVisibility() == View.GONE) {
-                etSearch.setVisibility(View.VISIBLE);
-                etSearch.requestFocus();
+            if (SearchAnimUtils.isVisible(etSearch)) {
+                SearchAnimUtils.hide(etSearch);
             } else {
-                etSearch.setVisibility(View.GONE);
-                etSearch.setText("");
+                SearchAnimUtils.show(etSearch);
             }
         });
 
@@ -193,6 +200,28 @@ public class AttendanceActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Dismiss search bar (with animation) when the user taps anywhere
+     * outside the search input while it is visible.
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN
+                && etSearch != null
+                && SearchAnimUtils.isVisible(etSearch)) {
+            Rect rect = new Rect();
+            etSearch.getGlobalVisibleRect(rect);
+            if (!rect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
+                InputMethodManager imm = (InputMethodManager)
+                        getSystemService(INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(
+                        etSearch.getWindowToken(), 0);
+                SearchAnimUtils.hide(etSearch);
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
     private void buildDateStrip() {
         dateItems = new ArrayList<>();
         String[] dayNames = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
@@ -225,7 +254,7 @@ public class AttendanceActivity extends AppCompatActivity {
             tvMonthYear.setText(monthFmt.format(currentMonth.getTime()));
         }
 
-        dateAdapter = new DateAdapter(dateItems, selectedIdx, (pos, date) -> {
+        dateAdapter = new DateAdapter(dateItems, selectedIdx, getToday(), (pos, date) -> {
             selectedDate = date;
             loadStudents();
         });
@@ -302,40 +331,9 @@ public class AttendanceActivity extends AppCompatActivity {
     }
 
     private void showAddStudentDialog() {
-        View view = getLayoutInflater().inflate(R.layout.dialog_add_student, null);
-
-        TextInputEditText etName = view.findViewById(R.id.etName);
-        TextInputEditText etReg = view.findViewById(R.id.etReg);
-        MaterialButton btnAdd = view.findViewById(R.id.btnAddStudent);
-        MaterialButton btnDone = view.findViewById(R.id.btnDone);
-        RecyclerView recycler = view.findViewById(R.id.recyclerStudents);
-
-        ArrayList<Student> tempList = new ArrayList<>();
-        recycler.setLayoutManager(new LinearLayoutManager(this));
-        SimpleStudentAdapter adapter = new SimpleStudentAdapter(tempList);
-        recycler.setAdapter(adapter);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(view)
-                .create();
-
-        btnAdd.setOnClickListener(v -> {
-            String name = etName.getText().toString();
-            String reg = etReg.getText().toString();
-            if (name.isEmpty() || reg.isEmpty()) return;
-            db.insertStudent(name, reg, sectionId);
-            tempList.add(new Student(0, name, reg, sectionId));
-            adapter.notifyDataSetChanged();
-            etName.setText("");
-            etReg.setText("");
-        });
-
-        btnDone.setOnClickListener(v -> {
-            dialog.dismiss();
-            loadStudents();
-        });
-
-        dialog.show();
+        AddStudentBottomSheet bottomSheet = AddStudentBottomSheet.newInstance(sectionId);
+        bottomSheet.setOnStudentsDoneListener(this::loadStudents);
+        bottomSheet.show(getSupportFragmentManager(), "AddStudentBottomSheet");
     }
 
     private void showEditDeleteDialog(Student student) {
@@ -360,32 +358,9 @@ public class AttendanceActivity extends AppCompatActivity {
     }
 
     private void showEditStudentDialog(Student student) {
-        View view = getLayoutInflater().inflate(R.layout.dialog_add_student, null);
-        TextInputEditText etName = view.findViewById(R.id.etName);
-        TextInputEditText etReg = view.findViewById(R.id.etReg);
-        MaterialButton btnAdd = view.findViewById(R.id.btnAddStudent);
-        MaterialButton btnDone = view.findViewById(R.id.btnDone);
-        RecyclerView recycler = view.findViewById(R.id.recyclerStudents);
-        recycler.setVisibility(View.GONE);
-        btnDone.setText("Cancel");
-        btnAdd.setText("Save Changes");
-
-        etName.setText(student.getName());
-        etReg.setText(student.getRegNo());
-
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(view).create();
-
-        btnAdd.setOnClickListener(v -> {
-            String name = etName.getText().toString();
-            String reg = etReg.getText().toString();
-            if (name.isEmpty() || reg.isEmpty()) return;
-            db.updateStudent(student.getId(), name, reg);
-            dialog.dismiss();
-            loadStudents();
-        });
-
-        btnDone.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
+        AddStudentBottomSheet bottomSheet = AddStudentBottomSheet.newEditInstance(student);
+        bottomSheet.setOnStudentsDoneListener(this::loadStudents);
+        bottomSheet.show(getSupportFragmentManager(), "EditStudentBottomSheet");
     }
 
     private void filterStudents(String query) {

@@ -1,17 +1,27 @@
 package com.example.markly.ui;
 
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.graphics.Rect;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.content.Intent;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.markly.adapter.SimpleStudentAdapter;
+import com.example.markly.database.BackupRestoreHelper;
 import com.google.android.material.button.MaterialButton;
 import com.example.markly.model.Student;
 import com.example.markly.R;
@@ -19,7 +29,9 @@ import com.example.markly.adapter.SectionAdapter;
 import com.example.markly.database.DatabaseHelper;
 import com.example.markly.model.Section;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
+import android.view.HapticFeedbackConstants;
 
 import java.util.ArrayList;
 import android.text.Editable;
@@ -35,27 +47,139 @@ public class MainActivity extends AppCompatActivity {
     SectionAdapter adapter;
     TextInputEditText etSearch;
     ImageView btnSearch;
+    ImageView btnMenu;
+    DrawerLayout drawerLayout;
+
+    // ── Restore file picker ──────────────────────────────────────────────
+    private final ActivityResultLauncher<Intent> restoreFilePicker =
+        registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Uri uri = result.getData().getData();
+                    if (uri == null) return;
+                    try {
+                        // Close current DB before overwriting the file
+                        db.close();
+                        BackupRestoreHelper.restoreFromUri(this, uri);
+                        // Re-open a fresh connection
+                        db = new DatabaseHelper(this);
+                        loadSections();
+                        Toast.makeText(this,
+                            "✓ Data restored successfully", Toast.LENGTH_SHORT).show();
+                    } catch (Exception e) {
+                        Toast.makeText(this,
+                            "Restore failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Apply saved theme before inflation
+        boolean savedDark = getSharedPreferences("markly_prefs", MODE_PRIVATE)
+            .getBoolean("dark_mode", false);
+        AppCompatDelegate.setDefaultNightMode(
+            savedDark ? AppCompatDelegate.MODE_NIGHT_YES
+                      : AppCompatDelegate.MODE_NIGHT_NO
+        );
+
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recyclerView);
         fab = findViewById(R.id.fabAdd);
         etSearch = findViewById(R.id.etSearch);
         btnSearch = findViewById(R.id.btnSearch);
+        btnMenu = findViewById(R.id.btnMenu);
+        drawerLayout = findViewById(R.id.drawerLayout);
+
+        // Open sidebar on menu icon tap
+        btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(androidx.core.view.GravityCompat.START));
+
+        // Sidebar navigation item clicks
+        LinearLayout sidebarNavClasses   = findViewById(R.id.sidebarNavClasses);
+        LinearLayout sidebarNavDarkMode  = findViewById(R.id.sidebarNavDarkMode);
+        LinearLayout sidebarNavBackup    = findViewById(R.id.sidebarNavBackup);
+        LinearLayout sidebarNavRestore   = findViewById(R.id.sidebarNavRestore);
+        LinearLayout sidebarNavReportBug = findViewById(R.id.sidebarNavReportBug);
+        MaterialSwitch switchDarkMode    = findViewById(R.id.switchDarkMode);
+
+        // Set switch to reflect saved preference
+        boolean isDark = getSharedPreferences("markly_prefs", MODE_PRIVATE)
+            .getBoolean("dark_mode", false);
+        switchDarkMode.setChecked(isDark);
+
+        sidebarNavClasses.setOnClickListener(v -> drawerLayout.closeDrawers());
+
+        // ── Dark Mode Toggle ─────────────────────────────────────────────
+        sidebarNavDarkMode.setOnClickListener(v -> {
+            boolean nowDark = !switchDarkMode.isChecked();
+            switchDarkMode.setChecked(nowDark);
+            getSharedPreferences("markly_prefs", MODE_PRIVATE)
+                .edit()
+                .putBoolean("dark_mode", nowDark)
+                .apply();
+            AppCompatDelegate.setDefaultNightMode(
+                nowDark ? AppCompatDelegate.MODE_NIGHT_YES
+                        : AppCompatDelegate.MODE_NIGHT_NO
+            );
+        });
+
+        sidebarNavBackup.setOnClickListener(v -> {
+            drawerLayout.closeDrawers();
+            try {
+                Intent shareIntent = BackupRestoreHelper.createBackupShareIntent(this);
+                startActivity(shareIntent);
+            } catch (Exception e) {
+                Toast.makeText(this,
+                    "Backup failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+
+        // ── Restore ─────────────────────────────────────────────────────
+        sidebarNavRestore.setOnClickListener(v -> {
+            drawerLayout.closeDrawers();
+            new AlertDialog.Builder(this)
+                .setTitle("Restore Data")
+                .setMessage("This will replace ALL current data with the selected backup." +
+                    "\n\nThis cannot be undone. Continue?")
+                .setPositiveButton("Choose File", (dialog, which) -> {
+                    Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    picker.setType("application/octet-stream");
+                    picker.addCategory(Intent.CATEGORY_OPENABLE);
+                    restoreFilePicker.launch(picker);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        });
+
+        // ── Report Bug ──────────────────────────────────────────────────
+        sidebarNavReportBug.setOnClickListener(v -> {
+            drawerLayout.closeDrawers();
+            String bugBody =
+                "**Device:** " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + "%0A" +
+                "**Android Version:** " + android.os.Build.VERSION.RELEASE + "%0A" +
+                "**App Version:** v1.0%0A%0A" +
+                "**Describe the bug:**%0A(describe what happened)%0A%0A" +
+                "**Steps to reproduce:**%0A1. %0A2. %0A%0A" +
+                "**Expected behavior:**%0A%0A" +
+                "**Screenshots:** (if any)";
+            String url = "https://github.com/cxinmayy/Markly/issues/new"
+                + "?title=%5BBug+Report%5D&body=" + bugBody;
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        });
 
         db = new DatabaseHelper(this);
         list = new ArrayList<>();
 
         btnSearch.setOnClickListener(v -> {
-            if (etSearch.getVisibility() == View.GONE) {
-                etSearch.setVisibility(View.VISIBLE);
-                etSearch.requestFocus();
+            if (SearchAnimUtils.isVisible(etSearch)) {
+                SearchAnimUtils.hide(etSearch);
             } else {
-                etSearch.setVisibility(View.GONE);
-                etSearch.setText("");
+                SearchAnimUtils.show(etSearch);
             }
         });
 
@@ -90,7 +214,32 @@ public class MainActivity extends AppCompatActivity {
 
         loadSections();
 
-        fab.setOnClickListener(v -> showAddDialog());
+        fab.setOnClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            showAddDialog();
+        });
+    }
+
+    /**
+     * Dismiss search bar (with animation) when the user taps anywhere
+     * outside the search input while it is visible.
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN
+                && SearchAnimUtils.isVisible(etSearch)) {
+            Rect rect = new Rect();
+            etSearch.getGlobalVisibleRect(rect);
+            if (!rect.contains((int) ev.getRawX(), (int) ev.getRawY())) {
+                // Dismiss keyboard
+                InputMethodManager imm = (InputMethodManager)
+                        getSystemService(INPUT_METHOD_SERVICE);
+                if (imm != null) imm.hideSoftInputFromWindow(
+                        etSearch.getWindowToken(), 0);
+                SearchAnimUtils.hide(etSearch);
+            }
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private void loadSections() {
@@ -124,81 +273,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showAddDialog() {
-
-        View view = getLayoutInflater().inflate(R.layout.dialog_add_section, null);
-
-        TextInputEditText etDept = view.findViewById(R.id.etDept);
-        TextInputEditText etSection = view.findViewById(R.id.etSection);
-        TextInputEditText etSubject = view.findViewById(R.id.etSubject);
-
-        new AlertDialog.Builder(this)
-                .setTitle("Add Section")
-                .setView(view)
-                .setPositiveButton("Save", (dialog, which) -> {
-
-                    String dept = etDept.getText().toString();
-                    String sec = etSection.getText().toString();
-                    String sub = etSubject.getText().toString();
-
-                    if (dept.isEmpty() || sec.isEmpty() || sub.isEmpty()) {
-                        Toast.makeText(this, "Fill all fields", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    long id = db.insertSection(dept, sec, sub);
-
-                    loadSections();
-
-                    int sectionId = (int) id;
-
-                    // Open student dialog with sectionId
-                    showAddStudentDialog(sectionId);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        AddSectionBottomSheet bottomSheet = new AddSectionBottomSheet();
+        bottomSheet.setOnSectionSavedListener(id -> {
+            loadSections();
+            showAddStudentDialog((int) id);
+        });
+        bottomSheet.show(getSupportFragmentManager(), "AddSectionBottomSheet");
     }
 
     private void showAddStudentDialog(int sectionId) {
-
-        View view = getLayoutInflater().inflate(R.layout.dialog_add_student, null);
-
-        TextInputEditText etName = view.findViewById(R.id.etName);
-        TextInputEditText etReg = view.findViewById(R.id.etReg);
-        MaterialButton btnAdd = view.findViewById(R.id.btnAddStudent);
-        MaterialButton btnDone = view.findViewById(R.id.btnDone);
-        RecyclerView recycler = view.findViewById(R.id.recyclerStudents);
-
-        ArrayList<Student> tempList = new ArrayList<>();
-        recycler.setLayoutManager(new LinearLayoutManager(this));
-        SimpleStudentAdapter studentAdapter = new SimpleStudentAdapter(tempList);
-        recycler.setAdapter(studentAdapter);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(view)
-                .create();
-
-        btnAdd.setOnClickListener(v -> {
-            String name = etName.getText().toString();
-            String reg = etReg.getText().toString();
-
-            if (name.isEmpty() || reg.isEmpty()) {
-                Toast.makeText(this, "Enter all fields", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            db.insertStudent(name, reg, sectionId);
-
-            tempList.add(new Student(0, name, reg, sectionId));
-            studentAdapter.notifyDataSetChanged();
-
-            etName.setText("");
-            etReg.setText("");
-        });
-
-        btnDone.setOnClickListener(v -> {
-            dialog.dismiss();
-        });
-
-        dialog.show();
+        AddStudentBottomSheet bottomSheet = AddStudentBottomSheet.newInstance(sectionId);
+        // We only reload section summary when done is tapped, but actual student data
+        // isn't shown on this screen, so we might not need to do anything. Just in case:
+        bottomSheet.setOnStudentsDoneListener(this::loadSections);
+        bottomSheet.show(getSupportFragmentManager(), "AddStudentBottomSheet");
     }
 }

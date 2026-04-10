@@ -1,25 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:padding="16dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog"
+    android:paddingStart="28dp"
+    android:paddingEnd="28dp"
+    android:paddingTop="32dp"
+    android:paddingBottom="24dp">
 
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/etDept"
-        android:hint="Department"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+    <!-- ── Header ─────────────────────────────────────── -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="NEW CLASS"
+        android:textColor="@color/on_surface_variant"
+        android:textSize="11sp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="6dp"/>
 
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/etSection"
-        android:hint="Section"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add a Section"
+        android:textColor="@color/primary_dim"
+        android:textSize="26sp"
+        android:fontFamily="sans-serif-black"
+        android:letterSpacing="-0.02"
+        android:layout_marginBottom="28dp"/>
 
-    <com.google.android.material.textfield.TextInputEditText
-        android:id="@+id/etSubject"
-        android:hint="Subject"
+    <!-- ── Department ──────────────────────────────────── -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Department"
+        android:textColor="@color/on_surface_variant"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.03"
+        android:layout_marginBottom="6dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.TextInputLayout.FilledBox"
+        app:boxBackgroundColor="@color/surface_container_low"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="0dp"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etDept"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="e.g. Computer Science"
+            android:textSize="15sp"
+            android:inputType="textCapWords"
+            android:fontFamily="sans-serif"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- ── Section ─────────────────────────────────────── -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Section"
+        android:textColor="@color/on_surface_variant"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.03"
+        android:layout_marginBottom="6dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.TextInputLayout.FilledBox"
+        app:boxBackgroundColor="@color/surface_container_low"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="0dp"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="e.g. R1 / A"
+            android:textSize="15sp"
+            android:inputType="textCapCharacters"
+            android:fontFamily="sans-serif"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- ── Subject ─────────────────────────────────────── -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Subject"
+        android:textColor="@color/on_surface_variant"
+        android:textSize="12sp"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.03"
+        android:layout_marginBottom="6dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@style/Widget.Material3.TextInputLayout.FilledBox"
+        app:boxBackgroundColor="@color/surface_container_low"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="0dp"
+        android:layout_marginBottom="28dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSubject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="e.g. Data Structures"
+            android:textSize="15sp"
+            android:inputType="textCapWords"
+            android:fontFamily="sans-serif"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- ── Action Buttons ─────────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelSection"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Cancel"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            android:minWidth="0dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            app:backgroundTint="@color/surface_container_low"
+            android:textColor="@color/on_surface_variant"
+            android:layout_marginEnd="8dp"
+            app:cornerRadius="12dp"
+            app:elevation="0dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveSection"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Save Class"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif-medium"
+            android:minWidth="0dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            app:backgroundTint="@color/tertiary"
+            android:textColor="@color/on_tertiary"
+            app:cornerRadius="12dp"
+            app:elevation="0dp"/>
+
+    </LinearLayout>
 
 </LinearLayout>

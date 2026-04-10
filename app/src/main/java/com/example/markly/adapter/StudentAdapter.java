@@ -5,6 +5,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+import android.view.HapticFeedbackConstants;
+import android.animation.ObjectAnimator;
+import android.view.animation.DecelerateInterpolator;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,6 +24,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
     String date;
     int sectionId;
     OnStudentLongClickListener longClickListener;
+    private int lastAnimatedPosition = -1;
 
     public interface OnStudentLongClickListener {
         void onStudentLongClick(Student student, int position);
@@ -92,11 +96,36 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.ViewHold
         }
 
         holder.itemView.setOnLongClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             if (longClickListener != null) {
                 longClickListener.onStudentLongClick(s, position);
             }
             return true;
         });
+
+        // Staggered entrance animation
+        if (position > lastAnimatedPosition) {
+            holder.itemView.setTranslationY(40f);
+            holder.itemView.setAlpha(0f);
+            
+            ObjectAnimator translation = ObjectAnimator.ofFloat(holder.itemView, View.TRANSLATION_Y, 40f, 0f);
+            ObjectAnimator alpha = ObjectAnimator.ofFloat(holder.itemView, View.ALPHA, 0f, 1f);
+            
+            translation.setInterpolator(new DecelerateInterpolator(1.5f));
+            alpha.setInterpolator(new DecelerateInterpolator(1.5f));
+            
+            translation.setDuration(400);
+            alpha.setDuration(400);
+            
+            long delay = Math.min(position, 6) * 60L;
+            translation.setStartDelay(delay);
+            alpha.setStartDelay(delay);
+            
+            translation.start();
+            alpha.start();
+            
+            lastAnimatedPosition = position;
+        }
     }
 
     private void applyStatusState(ViewHolder holder, int status) {

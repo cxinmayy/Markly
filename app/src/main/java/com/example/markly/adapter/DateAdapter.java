@@ -12,6 +12,9 @@ import com.example.markly.R;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.List;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 
 public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
 
@@ -33,17 +36,20 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
 
     private final List<DateItem> items;
     private int selectedPosition;
+    private final String todayDate;
     private final OnDateClickListener listener;
 
-    public DateAdapter(List<DateItem> items, int selectedPosition, OnDateClickListener listener) {
+    public DateAdapter(List<DateItem> items, int selectedPosition, String todayDate, OnDateClickListener listener) {
         this.items = items;
         this.selectedPosition = selectedPosition;
+        this.todayDate = todayDate;
         this.listener = listener;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         MaterialCardView card;
         TextView tvDayName, tvDate;
+        AnimatorSet pulseAnimator;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -92,6 +98,35 @@ public class DateAdapter extends RecyclerView.Adapter<DateAdapter.ViewHolder> {
             notifyItemChanged(selectedPosition);
             listener.onDateClick(selectedPosition, item.fullDate);
         });
+
+        // Today Glow Pulse Animation
+        if (item.fullDate != null && item.fullDate.equals(todayDate)) {
+            if (holder.pulseAnimator == null) {
+                ObjectAnimator scaleX = ObjectAnimator.ofFloat(holder.card, View.SCALE_X, 1f, 1.05f);
+                ObjectAnimator scaleY = ObjectAnimator.ofFloat(holder.card, View.SCALE_Y, 1f, 1.05f);
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);
+                scaleX.setRepeatMode(ValueAnimator.REVERSE);
+                scaleY.setRepeatMode(ValueAnimator.REVERSE);
+
+                holder.pulseAnimator = new AnimatorSet();
+                holder.pulseAnimator.playTogether(scaleX, scaleY);
+                holder.pulseAnimator.setDuration(900);
+            }
+            if (!holder.pulseAnimator.isStarted()) {
+                holder.pulseAnimator.start();
+            }
+        }
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        if (holder.pulseAnimator != null) {
+            holder.pulseAnimator.cancel();
+        }
+        holder.card.setScaleX(1f);
+        holder.card.setScaleY(1f);
     }
 
     @Override

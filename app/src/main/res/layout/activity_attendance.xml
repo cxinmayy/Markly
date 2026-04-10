@@ -22,7 +22,7 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center_vertical|start"
-                android:src="@android:drawable/ic_menu_revert"
+                android:src="@drawable/ic_back"
                 app:tint="@color/on_surface_variant"/>
 
             <LinearLayout
@@ -37,14 +37,14 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_marginEnd="16dp"
-                    android:src="@android:drawable/ic_menu_search"
+                    android:src="@drawable/ic_search"
                     app:tint="@color/primary"/>
 
                 <ImageView
                     android:id="@+id/btnExport"
                     android:layout_width="28dp"
                     android:layout_height="28dp"
-                    android:src="@android:drawable/ic_menu_share"
+                    android:src="@drawable/ic_export"
                     app:tint="@color/primary"/>
             </LinearLayout>
 
@@ -118,7 +118,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:layout_gravity="center"
-                    android:src="@android:drawable/ic_media_previous"
+                    android:src="@drawable/ic_chevron_left"
                     app:tint="@color/primary_dim"/>
             </com.google.android.material.card.MaterialCardView>
             
@@ -133,7 +133,7 @@
                     android:layout_width="16dp"
                     android:layout_height="16dp"
                     android:layout_gravity="center"
-                    android:src="@android:drawable/ic_media_next"
+                    android:src="@drawable/ic_chevron_right"
                     app:tint="@color/primary_dim"/>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
@@ -179,6 +179,6 @@
         app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Material3.FloatingActionButton"
         app:backgroundTint="@color/tertiary"
         app:tint="@color/on_tertiary"
-        android:src="@android:drawable/ic_input_add"/>
+        android:src="@drawable/ic_add"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -13,6 +13,9 @@ import com.example.markly.model.Section;
 
 import java.util.ArrayList;
 import android.content.Intent;
+import android.view.HapticFeedbackConstants;
+import android.animation.ObjectAnimator;
+import android.view.animation.DecelerateInterpolator;
 import com.example.markly.ui.AttendanceActivity;
 
 public class SectionAdapter extends RecyclerView.Adapter<SectionAdapter.ViewHolder> {
@@ -20,6 +23,7 @@ public class SectionAdapter extends RecyclerView.Adapter<SectionAdapter.ViewHold
     Context context;
     ArrayList<Section> list;
     OnSectionLongClickListener longClickListener;
+    private int lastAnimatedPosition = -1;
 
     public interface OnSectionLongClickListener {
         void onSectionLongClick(Section section, int position);
@@ -79,11 +83,36 @@ public class SectionAdapter extends RecyclerView.Adapter<SectionAdapter.ViewHold
         });
 
         holder.itemView.setOnLongClickListener(v -> {
+            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
             if (longClickListener != null) {
                 longClickListener.onSectionLongClick(s, position);
             }
             return true;
         });
+
+        // Staggered entrance animation
+        if (position > lastAnimatedPosition) {
+            holder.itemView.setTranslationY(40f);
+            holder.itemView.setAlpha(0f);
+            
+            ObjectAnimator translation = ObjectAnimator.ofFloat(holder.itemView, View.TRANSLATION_Y, 40f, 0f);
+            ObjectAnimator alpha = ObjectAnimator.ofFloat(holder.itemView, View.ALPHA, 0f, 1f);
+            
+            translation.setInterpolator(new DecelerateInterpolator(1.5f));
+            alpha.setInterpolator(new DecelerateInterpolator(1.5f));
+            
+            translation.setDuration(400);
+            alpha.setDuration(400);
+            
+            long delay = Math.min(position, 6) * 60L;
+            translation.setStartDelay(delay);
+            alpha.setStartDelay(delay);
+            
+            translation.start();
+            alpha.start();
+            
+            lastAnimatedPosition = position;
+        }
     }
 
     @Override
