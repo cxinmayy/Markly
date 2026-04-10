@@ -1,0 +1,33 @@
+<resources>
+    <!-- Background & Surfaces -->
+    <color name="background">#F8F9FA</color>
+    <color name="surface_container_low">#F1F4F6</color>
+    <color name="surface_container_lowest">#FFFFFF</color>
+    <color name="surface_bright">#F8F9FA</color>
+    <color name="surface_variant">#99E1E3E6</color>
+
+    <!-- Primary Palette -->
+    <color name="primary">#565E71</color>
+    <color name="primary_dim">#4B5265</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Secondary/Tertiary -->
+    <color name="tertiary">#006880</color>
+    <color name="on_tertiary">#FFFFFF</color>
+
+    <!-- Error/Absent -->
+    <color name="error_container">#FF8B9A</color>
+    <color name="on_error_container">#FFFFFF</color>
+
+    <!-- Text & Outlines -->
+    <color name="on_surface">#212121</color>
+    <color name="on_surface_variant">#5F6368</color>
+    <color name="outline">#ABB3B7</color>
+    <color name="outline_variant">#1AABB3B7</color>
+    
+    <!-- Utilities -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#212121</color>
+    <color name="gray">#9E9E9E</color>
+    <color name="transparent">#00000000</color>
+</resources>
